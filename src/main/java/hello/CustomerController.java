@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class CustomerController {
 
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
     public CustomerController(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -20,23 +20,23 @@ public class CustomerController {
 
     @PostMapping("/customers")
     public ResponseEntity<Void> save(@RequestBody Customer customer) {
-        String sql = "INSERT INTO customers(first_name, last_name) VALUES (?,?)";
-        jdbcTemplate.update(sql, customer.getFirstName(), customer.getLastName());
+        jdbcTemplate.update(
+                "INSERT INTO customers(first_name, last_name) VALUES (?,?)",
+                customer.firstName(),
+                customer.lastName()
+        );
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/customers")
     public ResponseEntity<List<Customer>> list() {
-        String sql = "select id, first_name, last_name from customers";
         List<Customer> customers = jdbcTemplate.query(
-                sql, (resultSet, rowNum) -> {
-                    Customer customer = new Customer(
-                            resultSet.getLong("id"),
-                            resultSet.getString("first_name"),
-                            resultSet.getString("last_name")
-                    );
-                    return customer;
-                });
+                "select id, first_name, last_name from customers",
+                (resultSet, rowNum) -> new Customer(
+                        resultSet.getLong("id"),
+                        resultSet.getString("first_name"),
+                        resultSet.getString("last_name")
+                ));
         return ResponseEntity.ok().body(customers);
     }
 }
